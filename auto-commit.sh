@@ -6,12 +6,15 @@
 # Modified version with:
 # - Repo directory: ~/www/.auto-commit
 # - HTTP API endpoints
+# - Normalized file names (32 chars max)
+# - Standardized commit messages
 # ==========================================
 
 # Config
 REPO_DIR="$HOME/www/.auto-commit"  # Custom repo location
 GIT_USER="wanforge"
 GIT_EMAIL="sugeng.sulistiyawan@gmail.com"
+MAX_FILENAME_LENGTH=32
 
 # Colors
 RED='\033[0;31m'
@@ -119,6 +122,62 @@ get_inspirational_quote() {
 }
 
 # =====================
+# STRING UTILITIES
+# =====================
+normalize_string() {
+    local str="$1"
+    local max_length="$2"
+    
+    # Convert to lowercase
+    str=$(echo "$str" | tr '[:upper:]' '[:lower:]')
+    
+    # Replace spaces with dashes
+    str=$(echo "$str" | tr ' ' '-')
+    
+    # Remove special characters
+    str=$(echo "$str" | sed -e 's/[^a-zA-Z0-9-]//g')
+    
+    # Trim to max length
+    str=${str:0:$max_length}
+    
+    # Remove trailing dash if exists
+    str=$(echo "$str" | sed 's/-$//')
+    
+    echo "$str"
+}
+
+generate_filename() {
+    local quote="$1"
+    local emoji="$2"
+    local timestamp=$(date +%s)
+    
+    # Normalize the quote for filename
+    local normalized=$(normalize_string "$quote" "$MAX_FILENAME_LENGTH")
+    
+    # If normalization removed everything, use timestamp
+    if [ -z "$normalized" ]; then
+        normalized="$timestamp"
+    fi
+    
+    echo "${emoji}-${normalized}.txt"
+}
+
+generate_commit_message() {
+    local emoji="$1"
+    local quote="$2"
+    
+    # Standard commit message format: [emoji] [first 10 words of quote...]
+    local short_quote=$(echo "$quote" | cut -d ' ' -f 1-10)
+    
+    # If quote is longer than 10 words, add ellipsis
+    if [ $(echo "$quote" | wc -w) -gt 10 ]; then
+        short_quote="${short_quote}..."
+    fi
+    
+    echo "${emoji} ${short_quote}"
+}
+
+# =====================
 # MAIN SCRIPT
 # =====================
 main() {
@@ -136,7 +195,7 @@ main() {
         git branch -M main
         echo "# Auto-Commit Repository" > README.md
         git add README.md
-        git commit -m "🎉"
+        git commit -m "🎉 Initial commit"
     else
         cd "$REPO_DIR" || exit
     fi
@@ -149,13 +208,15 @@ main() {
     do
         EMOJI=$(get_random_emoji)
         QUOTE=$(get_inspirational_quote)
-        FILENAME="${EMOJI}-$(date +%s).txt"
+        FILENAME=$(generate_filename "$QUOTE" "$EMOJI")
+        COMMIT_MSG=$(generate_commit_message "$EMOJI" "$QUOTE")
         
         echo "$QUOTE" > "$FILENAME"
         git add "$FILENAME"
-        git commit -m "$EMOJI"
+        git commit -m "$COMMIT_MSG"
         
-        echo -e "${YELLOW}Committed: ${NC}${EMOJI} ${QUOTE}"
+        echo -e "${YELLOW}Committed: ${NC}${COMMIT_MSG}"
+        echo -e "   File: ${FILENAME}"
     done
     
     # Push to remote

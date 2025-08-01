@@ -14,7 +14,7 @@
 REPO_DIR="$HOME/www/.auto-commit"  # Custom repo location
 GIT_USER="wanforge"
 GIT_EMAIL="sugeng.sulistiyawan@gmail.com"
-MAX_FILENAME_LENGTH=32
+MAX_FILENAME_LENGTH=64
 
 # Colors
 RED='\033[0;31m'
@@ -148,7 +148,6 @@ normalize_string() {
 
 generate_filename() {
     local quote="$1"
-    local emoji="$2"
     local timestamp=$(date +%s)
     
     # Normalize the quote for filename
@@ -159,7 +158,7 @@ generate_filename() {
         normalized="$timestamp"
     fi
     
-    echo "${emoji}-${normalized}.txt"
+    echo "${normalized}.txt"
 }
 
 generate_commit_message() {
@@ -195,7 +194,7 @@ main() {
         git branch -M main
         echo "# Auto-Commit Repository" > README.md
         git add README.md
-        git commit -m "🎉 Initial commit"
+        git commit -m "🎉"
     else
         cd "$REPO_DIR" || exit
     fi
@@ -208,7 +207,7 @@ main() {
     do
         EMOJI=$(get_random_emoji)
         QUOTE=$(get_inspirational_quote)
-        FILENAME=$(generate_filename "$QUOTE" "$EMOJI")
+        FILENAME=$(generate_filename "$QUOTE")
         COMMIT_MSG=$(generate_commit_message "$EMOJI" "$QUOTE")
         
         echo "$QUOTE" > "$FILENAME"
@@ -223,9 +222,9 @@ main() {
     if ! git remote | grep -q "origin"; then
         echo -e "${YELLOW}[WARNING] No remote origin set.${NC}"
         echo -e "Create a GitHub repository and run:"
-        echo -e "git remote add origin git@github.com:username/repo.git"
+        echo -e "git remote add origin git@github.com:wanforge/.auto-commit.git"
         echo -e "or:"
-        echo -e "git remote add origin http://github.com/username/repo.git"
+        echo -e "git remote add origin https://github.com/wanforge/.auto-commit.git"
     else
         git push origin main
         echo -e "${GREEN}[SUCCESS] Pushed commits to GitHub!${NC}"

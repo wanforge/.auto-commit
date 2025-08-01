@@ -200,7 +200,7 @@ main() {
     fi
     
     # Generate random number of commits (1-5)
-    RANDOM_COMMITS=$(( (RANDOM % 5) + 1 ))
+    RANDOM_COMMITS=$(( (RANDOM % 16) + 1 ))
     echo -e "${GREEN}[INFO] Generating $RANDOM_COMMITS commits...${NC}"
     
     for (( i=1; i<=RANDOM_COMMITS; i++ ))

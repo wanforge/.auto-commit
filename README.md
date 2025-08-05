@@ -101,7 +101,7 @@ crontab -e
 2. Add this line:
 
 ```bash
-0 6 * * 1-5 /home/sugengsulistiyawan/.auto-commit/auto-commit.sh >> /home/sugengsulistiyawan/.auto-commit/auto-commit.log 2>&1
+0 6 * * 1-5 /home/wanforge/www/.auto-commit/auto-commit.sh >> /home/wanforge/www/.auto-commit/auto-commit.log 2>&1
 ```
 
 Alternative schedules:

@@ -11,7 +11,7 @@
 # ==========================================
 
 # Config
-REPO_DIR="$HOME/.auto-commit"  # Custom repo location
+REPO_DIR="$HOME/www/.auto-commit"  # Custom repo location
 GIT_USER="Sugeng Sulistiyawan"
 GIT_EMAIL="sugeng.sulistiyawan@gmail.com"
 MAX_FILENAME_LENGTH=64
@@ -56,20 +56,20 @@ install_dependencies() {
         case $ID in
             pop|ubuntu|debian)
                 INSTALL_CMD="sudo apt install -y"
-                ;;
+            ;;
             fedora|rhel|centos)
                 INSTALL_CMD="sudo dnf install -y"
-                ;;
+            ;;
             *)
                 echo -e "${RED}[ERROR] Unsupported Linux distro${NC}"
                 exit 1
-                ;;
+            ;;
         esac
     else
         echo -e "${RED}[ERROR] Cannot detect Linux distribution${NC}"
         exit 1
     fi
-
+    
     echo -e "${GREEN}[INFO] Installing dependencies...${NC}"
     for pkg in "$@"; do
         $INSTALL_CMD "$pkg"
@@ -81,7 +81,7 @@ install_dependencies() {
 # =====================
 get_random_emoji() {
     local emojis=(
-        "💡" "✨" "🌱" "🚀" "🎯" "🔖" "📚" "🌿" "🦋" "🍀" 
+        "💡" "✨" "🌱" "🚀" "🎯" "🔖" "📚" "🌿" "🦋" "🍀"
         "🌸" "🌼" "🌻" "🌞" "🌝" "🌛" "🌟" "🌠" "☀️" "⭐"
         "🔥" "💧" "🌊" "🍃" "🍂" "🍁" "🍄" "🌰" "🎁" "🎈"
         "🧩" "🎨" "🖌️" "📝" "📌" "📍" "🎉" "🎊" "🏆" "🏅"
@@ -194,7 +194,7 @@ get_commits_for_aesthetic_pattern() {
                 4) echo 10 ;; # Thursday - darkest green
                 5) echo 7 ;;  # Friday - dark green
             esac
-            ;;
+        ;;
         2)  # Second week - wave pattern
             case $day_of_week in
                 1) echo 5 ;;  # Monday - medium green
@@ -203,7 +203,7 @@ get_commits_for_aesthetic_pattern() {
                 4) echo 8 ;;  # Thursday - dark green
                 5) echo 5 ;;  # Friday - medium green
             esac
-            ;;
+        ;;
         3)  # Third week - mountain pattern
             case $day_of_week in
                 1) echo 3 ;;  # Monday - light green
@@ -212,7 +212,7 @@ get_commits_for_aesthetic_pattern() {
                 4) echo 6 ;;  # Thursday - medium green
                 5) echo 3 ;;  # Friday - light green
             esac
-            ;;
+        ;;
         4|5)  # Fourth/Fifth week - descending pattern
             case $day_of_week in
                 1) echo 9 ;;  # Monday - dark green
@@ -221,10 +221,10 @@ get_commits_for_aesthetic_pattern() {
                 4) echo 2 ;;  # Thursday - light green
                 5) echo 1 ;;  # Friday - light green
             esac
-            ;;
+        ;;
         *)  # Fallback pattern
             echo $(( (RANDOM % 8) + 1 ))
-            ;;
+        ;;
     esac
 }
 
@@ -235,7 +235,7 @@ check_github_commits_today() {
     local username="wanforge"
     local today=$(date +%Y-%m-%d)
     
-    echo -e "${GREEN}[INFO] Checking existing commits for user: $username${NC}"
+    echo -e "${GREEN}[INFO] Checking existing commits for user: $username${NC}" >&2
     
     # Get GitHub events for today (public API)
     local events_url="https://api.github.com/users/$username/events"
@@ -245,7 +245,7 @@ check_github_commits_today() {
     local api_response=$(curl -s --max-time 10 "$events_url" 2>/dev/null)
     
     if [ $? -ne 0 ] || [ -z "$api_response" ]; then
-        echo -e "${YELLOW}[WARNING] Cannot connect to GitHub API. Proceeding without existing commit check.${NC}"
+        echo -e "${YELLOW}[WARNING] Cannot connect to GitHub API. Proceeding without existing commit check.${NC}" >&2
         echo "0"
         return
     fi
@@ -257,9 +257,9 @@ check_github_commits_today() {
     
     if [[ "$push_events" =~ ^[0-9]+$ ]] && [ "$push_events" -gt 0 ]; then
         existing_commits=$push_events
-        echo -e "${YELLOW}[INFO] Found $existing_commits commits already made today${NC}"
+        echo -e "${YELLOW}[INFO] Found $existing_commits commits already made today${NC}" >&2
     else
-        echo -e "${GREEN}[INFO] No commits found today, starting fresh${NC}"
+        echo -e "${GREEN}[INFO] No commits found today, starting fresh${NC}" >&2
         existing_commits=0
     fi
     
@@ -269,6 +269,18 @@ check_github_commits_today() {
 calculate_remaining_commits() {
     local target_commits="$1"
     local existing_commits="$2"
+    
+    # Validate input parameters are numeric
+    if ! [[ "$target_commits" =~ ^[0-9]+$ ]]; then
+        echo -e "${YELLOW}[WARNING] Invalid target_commits value: $target_commits, defaulting to 0${NC}" >&2
+        target_commits=0
+    fi
+    
+    if ! [[ "$existing_commits" =~ ^[0-9]+$ ]]; then
+        echo -e "${YELLOW}[WARNING] Invalid existing_commits value: $existing_commits, defaulting to 0${NC}" >&2
+        existing_commits=0
+    fi
+    
     local remaining=$((target_commits - existing_commits))
     
     if [ $remaining -lt 0 ]; then
@@ -301,12 +313,17 @@ main() {
         git init
         git config user.name "$GIT_USER"
         git config user.email "$GIT_EMAIL"
+        git config commit.gpgsign false
+        git config tag.gpgsign false
         git branch -M main
         echo "# Auto-Commit Repository" > README.md
         git add README.md
         git commit -m "🎉"
     else
         cd "$REPO_DIR" || exit
+        # Ensure GPG signing is disabled for existing repo
+        git config commit.gpgsign false
+        git config tag.gpgsign false
     fi
     
     # Create quotes directory if doesn't exist
@@ -321,8 +338,20 @@ main() {
     # Check existing commits on GitHub
     EXISTING_COMMITS=$(check_github_commits_today)
     
+    # Ensure EXISTING_COMMITS is a valid number
+    if ! [[ "$EXISTING_COMMITS" =~ ^[0-9]+$ ]]; then
+        echo -e "${YELLOW}[WARNING] Invalid commit count received, defaulting to 0${NC}" >&2
+        EXISTING_COMMITS=0
+    fi
+    
     # Calculate how many more commits we need
     COMMITS_COUNT=$(calculate_remaining_commits "$TARGET_COMMITS" "$EXISTING_COMMITS")
+    
+    # Ensure COMMITS_COUNT is a valid number
+    if ! [[ "$COMMITS_COUNT" =~ ^[0-9]+$ ]]; then
+        echo -e "${YELLOW}[WARNING] Invalid commits count calculated, defaulting to 0${NC}" >&2
+        COMMITS_COUNT=0
+    fi
     
     # Get pattern description
     local day_name=$(date +%A)
@@ -363,24 +392,28 @@ main() {
     done
     
     # Push to remote
-    if ! git remote | grep -q "origin"; then
+    if ! git remote show origin >/dev/null 2>&1; then
         echo -e "${YELLOW}[WARNING] No remote origin set.${NC}"
         echo -e "Create a GitHub repository and run:"
         echo -e "git remote add origin git@github.com:wanforge/.auto-commit.git"
         echo -e "or:"
         echo -e "git remote add origin https://github.com/wanforge/.auto-commit.git"
     else
-        git push origin main
-        echo -e "${GREEN}[SUCCESS] Pushed commits to GitHub!${NC}"
-        
-        # Final status
-        local final_count=$((EXISTING_COMMITS + COMMITS_COUNT))
-        echo -e "${GREEN}[PATTERN STATUS] Total commits today: $final_count/$TARGET_COMMITS${NC}"
-        
-        if [ $final_count -ge $TARGET_COMMITS ]; then
-            echo -e "${GREEN}[SUCCESS] ✅ Pattern goal achieved for today!${NC}"
+        echo -e "${GREEN}[INFO] Pushing commits to GitHub...${NC}"
+        if git push origin main; then
+            echo -e "${GREEN}[SUCCESS] Pushed commits to GitHub!${NC}"
+            
+            # Final status
+            local final_count=$((EXISTING_COMMITS + COMMITS_COUNT))
+            echo -e "${GREEN}[PATTERN STATUS] Total commits today: $final_count/$TARGET_COMMITS${NC}"
+            
+            if [ $final_count -ge $TARGET_COMMITS ]; then
+                echo -e "${GREEN}[SUCCESS] ✅ Pattern goal achieved for today!${NC}"
+            else
+                echo -e "${YELLOW}[INFO] ⏳ Pattern partially completed. Run again if needed.${NC}"
+            fi
         else
-            echo -e "${YELLOW}[INFO] ⏳ Pattern partially completed. Run again if needed.${NC}"
+            echo -e "${RED}[ERROR] Failed to push commits to GitHub. Please check your remote configuration and network connection.${NC}"
         fi
     fi
 }

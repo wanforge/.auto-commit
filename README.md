@@ -1,4 +1,12 @@
-# GitHub Auto-Commit Scri## ✨ Features
+# GitHub Auto-Commit Script
+
+![Shell Script](https://img.shields.io/badge/Shell_Script-%23121011.svg?style=for-the-badge&logo=gnu-bash&logoColor=white)
+![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)
+![Automation](https://img.shields.io/badge/Automation-%23FF6F00.svg?style=for-the-badge&logo=windows-terminal&logoColor=white)
+
+Automated Git commit script that creates aesthetic contribution patterns on GitHub with intelligent commit management and beautiful weekly patterns.
+
+## ✨ Features
 
 - 🎨 **Aesthetic GitHub Contribution Patterns** - Creates beautiful weekly patterns on your contribution graph
 - 📅 **Smart Weekday-Only Commits** - Only runs Monday-Friday for professional patterns
@@ -11,17 +19,13 @@
 - 🐧 **Multi-Distro Support** - Ubuntu/Pop!_OS and Fedora compatibility
 - ⏲️ **Intelligent Scheduling** - Smart cron integration with pattern awareness
 - 🌈 **Color-Coded Contribution Levels** - Light to dark green based on commit frequency
-- 🔄 **API Fallback System** - Multiple quote sources with offline fallbackScript](<https://img.shields.io/badge/Shell_Script-%23121011.svg?style=for-the-badge&logo=gnu-bash&logoColor=white>)
-![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)
-![Automation](https://img.shields.io/badge/Automation-%23FF6F00.svg?style=for-the-badge&logo=windows-terminal&logoColor=white)
-
-Automated Git commit script that creates aesthetic contribution patterns on GitHub with intelligent commit management and beautiful weekly patterns.
+- 🔄 **API Fallback System** - Multiple quote sources with offline fallback
 
 ## 📋 Table of Contents
 
-- [GitHub Auto-Commit Scri## ✨ Features](#github-auto-commit-scri--features)
-  - [📋 Table of Contents](#-table-of-contents)
+- [GitHub Auto-Commit Script](#github-auto-commit-script)
   - [✨ Features](#-features)
+  - [📋 Table of Contents](#-table-of-contents)
   - [📥 Installation](#-installation)
   - [⚙️ Configuration](#️-configuration)
   - [🚀 Usage](#-usage)
@@ -41,19 +45,6 @@ Automated Git commit script that creates aesthetic contribution patterns on GitH
     - [How to stop automated commits?](#how-to-stop-automated-commits)
   - [📜 License](#-license)
 
-## ✨ Features
-
-- � **Aesthetic GitHub Contribution Patterns** - Creates beautiful weekly patterns on your contribution graph
-- 📅 **Smart Weekday-Only Commits** - Only runs Monday-Friday for professional patterns
-- � **GitHub Integration Check** - Verifies existing commits to avoid over-committing
-- 💬 **Inspirational Quotes** - Uses API or built-in Indonesian quotes collection
-- 📁 **Organized File Structure** - Saves quotes in dedicated `quotes/` folder
-- 🎯 **Pattern-Based Commits** - 4 different weekly patterns (Ascending, Wave, Mountain, Descending)
-- 📝 **Preserved Filenames** - Keeps original case and spaces in quote filenames
-- 🔄 **Automatic Dependency Installation** - Auto-installs git, curl, jq
-- 🐧 **Multi-Distro Support** - Ubuntu/Pop!_OS and Fedora compatibility
-- ⏲️ **Intelligent Scheduling** - Smart cron integration with pattern awareness
-
 ## 📥 Installation
 
 1. Clone or download the script:
@@ -63,7 +54,7 @@ git clone https://github.com/wanforge/.auto-commit.git
 cd .auto-commit
 ```
 
-2. Make the script executable:
+1. Make the script executable:
 
 ```bash
 chmod +x auto-commit.sh
@@ -98,7 +89,7 @@ For automated weekday commits (Monday-Friday at 6:00 AM):
 crontab -e
 ```
 
-2. Add this line:
+1. Add this line:
 
 ```bash
 0 6 * * 1-5 /home/wanforge/www/.auto-commit/auto-commit.sh >> /home/wanforge/www/.auto-commit/auto-commit.log 2>&1
@@ -112,7 +103,7 @@ Alternative schedules:
 
 ## 📂 File Structure
 
-```
+```text
 /home/sugengsulistiyawan/.auto-commit/
 ├── auto-commit.sh      # Main script
 ├── auto-commit.log     # Execution logs (created by cron)
@@ -236,7 +227,7 @@ The script automatically detects weekends and displays a friendly message withou
    crontab -e
    ```
 
-2. Delete the repository:
+1. Delete the repository:
 
    ```bash
    rm -rf ~/.auto-commit

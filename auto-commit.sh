@@ -6,43 +6,44 @@
 # Modified version with:
 # - Repo directory: ~/.auto-commit
 # - HTTP API endpoints
-# - Normalized file names (32 chars max)
+# - Quotes organized by alphabet
 # - Standardized commit messages
 # ==========================================
 
-# Config
-REPO_DIR="$HOME/www/.auto-commit"  # Custom repo location
+# Configuration
+REPO_DIR="$HOME/www/.auto-commit"    # Auto-commit repository location
+QUOTES_REPO_DIR="$HOME/www/.quotes"  # Quotes repository location
 GIT_USER="Sugeng Sulistiyawan"
 GIT_EMAIL="sugeng.sulistiyawan@gmail.com"
 MAX_FILENAME_LENGTH=64
 
-# Colors
+# Color codes for output formatting
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # =====================
-# DEPENDENCY CHECK
+# DEPENDENCY MANAGEMENT
 # =====================
+
 check_dependencies() {
     local missing=()
     
-    # Check git
+    # Check required tools
     if ! command -v git &> /dev/null; then
         missing+=("git")
     fi
     
-    # Check curl
     if ! command -v curl &> /dev/null; then
         missing+=("curl")
     fi
     
-    # Check jq
     if ! command -v jq &> /dev/null; then
         missing+=("jq")
     fi
     
+    # Install missing dependencies if any
     if [ ${#missing[@]} -gt 0 ]; then
         echo -e "${YELLOW}[WARNING] Missing dependencies:${NC} ${missing[*]}"
         install_dependencies "${missing[@]}"
@@ -50,20 +51,20 @@ check_dependencies() {
 }
 
 install_dependencies() {
-    # Detect distro
+    # Detect Linux distribution
     if [ -f /etc/os-release ]; then
         source /etc/os-release
         case $ID in
             pop|ubuntu|debian)
                 INSTALL_CMD="sudo apt install -y"
-            ;;
+                ;;
             fedora|rhel|centos)
                 INSTALL_CMD="sudo dnf install -y"
-            ;;
+                ;;
             *)
-                echo -e "${RED}[ERROR] Unsupported Linux distro${NC}"
+                echo -e "${RED}[ERROR] Unsupported Linux distribution${NC}"
                 exit 1
-            ;;
+                ;;
         esac
     else
         echo -e "${RED}[ERROR] Cannot detect Linux distribution${NC}"
@@ -77,8 +78,9 @@ install_dependencies() {
 }
 
 # =====================
-# EMOJI & QUOTE FUNCTIONS (HTTP version)
+# EMOJI & QUOTE FUNCTIONS
 # =====================
+
 get_random_emoji() {
     local emojis=(
         "💡" "✨" "🌱" "🚀" "🎯" "🔖" "📚" "🌿" "🦋" "🍀"
@@ -96,6 +98,7 @@ get_random_emoji() {
 
 get_inspirational_quote() {
     local quote
+    
     # Try multiple quote APIs (HTTP only)
     quote=$(curl -s "http://api.quotable.io/random" | jq -r '.content' 2>/dev/null)
     
@@ -103,8 +106,8 @@ get_inspirational_quote() {
         quote=$(curl -s "http://zenquotes.io/api/random" | jq -r '.[0].q' 2>/dev/null)
     fi
     
+    # Fallback quotes if APIs are unavailable
     if [ -z "$quote" ]; then
-        # Fallback quotes
         local fallback_quotes=(
             "Perjalanan ribuan mil dimulai dengan satu langkah"
             "Belajar adalah harta karun yang akan mengikuti pemiliknya ke mana pun"
@@ -122,38 +125,109 @@ get_inspirational_quote() {
 }
 
 # =====================
-# STRING UTILITIES
+# QUOTE MANAGEMENT
 # =====================
-normalize_string() {
-    local str="$1"
-    local max_length="$2"
+
+get_alphabet_section() {
+    local quote="$1"
+    local first_char="${quote:0:1}"
     
-    # Keep original case and spaces
-    # Only remove special characters that are problematic for filenames
-    str=$(echo "$str" | sed -e 's/[\/\\:*?"<>|]//g')
+    # Convert to uppercase for consistency
+    first_char=$(echo "$first_char" | tr '[:lower:]' '[:upper:]')
     
-    # Trim to max length
-    str=${str:0:$max_length}
-    
-    # Remove leading/trailing whitespace
-    str=$(echo "$str" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
-    
-    echo "$str"
+    # Return the first character or # for non-alphabetic characters
+    if [[ "$first_char" =~ [A-Z] ]]; then
+        echo "$first_char"
+    else
+        echo "#"
+    fi
 }
 
-generate_filename() {
+append_quote_to_readme() {
     local quote="$1"
-    local timestamp=$(date +%s)
+    local emoji="$2"
+    local quotes_readme="$QUOTES_REPO_DIR/README.md"
     
-    # Normalize the quote for filename
-    local normalized=$(normalize_string "$quote" "$MAX_FILENAME_LENGTH")
+    # Get alphabet section (no language grouping)
+    local alphabet=$(get_alphabet_section "$quote")
+    local quote_line="- $emoji $quote"
     
-    # If normalization removed everything, use timestamp
-    if [ -z "$normalized" ]; then
-        normalized="$timestamp"
+    # Check if quote text already exists to avoid duplicates
+    local quote_text_only=$(echo "$quote_line" | sed 's/^- [^ ]* //')
+    if grep -q "$quote_text_only" "$quotes_readme"; then
+        echo -e "${YELLOW}[INFO] Quote already exists, skipping: $quote${NC}"
+        return
     fi
     
-    echo "${normalized}.txt"
+    # Create backup of README.md
+    cp "$quotes_readme" "$quotes_readme.bak"
+    
+    # Use AWK to properly handle the insertion by alphabet
+    awk -v alph="$alphabet" -v quote_line="$quote_line" '
+    BEGIN { 
+        in_alph = 0
+        alph_found = 0
+        inserted = 0
+    }
+    
+    # Check for alphabet section headers
+    /^## / {
+        if ($0 == "## " alph) {
+            in_alph = 1
+            alph_found = 1
+            print $0
+        } else {
+            if (!alph_found && !inserted && $0 > "## " alph) {
+                # Insert new alphabet section before this subsection
+                print "## " alph
+                print ""
+                print quote_line
+                print ""
+                inserted = 1
+            }
+            in_alph = 0
+            print $0
+        }
+        next
+    }
+    
+    # Handle quote lines within alphabet section
+    /^- / {
+        if (in_alph && !inserted) {
+            if ($0 > quote_line) {
+                print quote_line
+                inserted = 1
+            }
+        }
+        print $0
+        next
+    }
+    
+    # Handle empty lines and other content
+    {
+        if (in_alph && /^$/ && !inserted) {
+            print quote_line
+            inserted = 1
+        }
+        print $0
+    }
+    
+    END {
+        if (!alph_found && !inserted) {
+            # Add new alphabet section at the end
+            print ""
+            print "## " alph
+            print ""
+            print quote_line
+        } else if (alph_found && !inserted) {
+            # Add quote at the end of existing alphabet section
+            print quote_line
+        }
+    }
+    ' "$quotes_readme" > "$quotes_readme.tmp"
+    
+    mv "$quotes_readme.tmp" "$quotes_readme"
+    echo -e "${GREEN}[INFO] Quote added to alphabet section: $alphabet${NC}"
 }
 
 generate_commit_message() {
@@ -163,7 +237,7 @@ generate_commit_message() {
     # Standard commit message format: [emoji] [first 10 words of quote...]
     local short_quote=$(echo "$quote" | cut -d ' ' -f 1-10)
     
-    # If quote is longer than 10 words, add ellipsis
+    # Add ellipsis if quote is longer than 10 words
     if [ $(echo "$quote" | wc -w) -gt 10 ]; then
         short_quote="${short_quote}..."
     fi
@@ -174,8 +248,9 @@ generate_commit_message() {
 # =====================
 # AESTHETIC PATTERN GENERATOR
 # =====================
+
 get_commits_for_aesthetic_pattern() {
-    local day_of_week=$(date +%u)  # 1=Monday, 7=Sunday
+    local day_of_week=$(date +%u)    # 1=Monday, 7=Sunday
     local week_of_month=$(( (10#$(date +%d) - 1) / 7 + 1 ))
     
     # Only create commits on weekdays (Monday-Friday)
@@ -188,49 +263,50 @@ get_commits_for_aesthetic_pattern() {
     case $week_of_month in
         1)  # First week - ascending pattern
             case $day_of_week in
-                1) echo 2 ;;  # Monday - light green
-                2) echo 4 ;;  # Tuesday - medium green
-                3) echo 7 ;;  # Wednesday - dark green
-                4) echo 10 ;; # Thursday - darkest green
-                5) echo 7 ;;  # Friday - dark green
+                1) echo 2 ;;   # Monday - light green
+                2) echo 4 ;;   # Tuesday - medium green
+                3) echo 7 ;;   # Wednesday - dark green
+                4) echo 10 ;;  # Thursday - darkest green
+                5) echo 7 ;;   # Friday - dark green
             esac
-        ;;
+            ;;
         2)  # Second week - wave pattern
             case $day_of_week in
-                1) echo 5 ;;  # Monday - medium green
-                2) echo 8 ;;  # Tuesday - dark green
-                3) echo 3 ;;  # Wednesday - light green
-                4) echo 8 ;;  # Thursday - dark green
-                5) echo 5 ;;  # Friday - medium green
+                1) echo 5 ;;   # Monday - medium green
+                2) echo 8 ;;   # Tuesday - dark green
+                3) echo 3 ;;   # Wednesday - light green
+                4) echo 8 ;;   # Thursday - dark green
+                5) echo 5 ;;   # Friday - medium green
             esac
-        ;;
+            ;;
         3)  # Third week - mountain pattern
             case $day_of_week in
-                1) echo 3 ;;  # Monday - light green
-                2) echo 6 ;;  # Tuesday - medium green
-                3) echo 12 ;; # Wednesday - darkest green
-                4) echo 6 ;;  # Thursday - medium green
-                5) echo 3 ;;  # Friday - light green
+                1) echo 3 ;;   # Monday - light green
+                2) echo 6 ;;   # Tuesday - medium green
+                3) echo 12 ;;  # Wednesday - darkest green
+                4) echo 6 ;;   # Thursday - medium green
+                5) echo 3 ;;   # Friday - light green
             esac
-        ;;
+            ;;
         4|5)  # Fourth/Fifth week - descending pattern
             case $day_of_week in
-                1) echo 9 ;;  # Monday - dark green
-                2) echo 6 ;;  # Tuesday - medium green
-                3) echo 4 ;;  # Wednesday - medium green
-                4) echo 2 ;;  # Thursday - light green
-                5) echo 1 ;;  # Friday - light green
+                1) echo 9 ;;   # Monday - dark green
+                2) echo 6 ;;   # Tuesday - medium green
+                3) echo 4 ;;   # Wednesday - medium green
+                4) echo 2 ;;   # Thursday - light green
+                5) echo 1 ;;   # Friday - light green
             esac
-        ;;
+            ;;
         *)  # Fallback pattern
             echo $(( (RANDOM % 8) + 1 ))
-        ;;
+            ;;
     esac
 }
 
 # =====================
 # GITHUB CONTRIBUTION CHECK
 # =====================
+
 check_github_commits_today() {
     local username="wanforge"
     local today=$(date +%Y-%m-%d)
@@ -283,6 +359,7 @@ calculate_remaining_commits() {
     
     local remaining=$((target_commits - existing_commits))
     
+    # Ensure non-negative result
     if [ $remaining -lt 0 ]; then
         remaining=0
     fi
@@ -293,6 +370,7 @@ calculate_remaining_commits() {
 # =====================
 # MAIN SCRIPT
 # =====================
+
 main() {
     # Check if it's weekend (Saturday=6, Sunday=7)
     local day_of_week=$(date +%u)
@@ -305,9 +383,9 @@ main() {
     # Check dependencies
     check_dependencies
     
-    # Initialize repo if doesn't exist
+    # Initialize auto-commit repository if it doesn't exist
     if [ ! -d "$REPO_DIR" ]; then
-        echo -e "${GREEN}[INFO] Creating repository directory...${NC}"
+        echo -e "${GREEN}[INFO] Creating auto-commit repository directory...${NC}"
         mkdir -p "$REPO_DIR"
         cd "$REPO_DIR" || exit
         git init
@@ -326,11 +404,30 @@ main() {
         git config tag.gpgsign false
     fi
     
-    # Create quotes directory if doesn't exist
-    if [ ! -d "quotes" ]; then
-        echo -e "${GREEN}[INFO] Creating quotes directory...${NC}"
-        mkdir -p quotes
+    # Initialize quotes repository if it doesn't exist
+    if [ ! -d "$QUOTES_REPO_DIR" ]; then
+        echo -e "${GREEN}[INFO] Creating quotes repository directory...${NC}"
+        mkdir -p "$QUOTES_REPO_DIR"
+        cd "$QUOTES_REPO_DIR" || exit
+        git init
+        git config user.name "$GIT_USER"
+        git config user.email "$GIT_EMAIL"
+        git config commit.gpgsign false
+        git config tag.gpgsign false
+        git branch -M main
+        echo "# Quotes" > README.md
+        echo "" >> README.md
+        git add README.md
+        git commit -m "🎉 Initialize quotes repository"
+    else
+        # Ensure GPG signing is disabled for existing quotes repo
+        cd "$QUOTES_REPO_DIR" || exit
+        git config commit.gpgsign false
+        git config tag.gpgsign false
     fi
+    
+    # Return to auto-commit repo for the rest of the script
+    cd "$REPO_DIR" || exit
     
     # Generate commits based on aesthetic pattern for weekdays
     TARGET_COMMITS=$(get_commits_for_aesthetic_pattern)
@@ -353,7 +450,7 @@ main() {
         COMMITS_COUNT=0
     fi
     
-    # Get pattern description
+    # Get pattern description for display
     local day_name=$(date +%A)
     local week_of_month=$(( (10#$(date +%d) - 1) / 7 + 1 ))
     local pattern_name=""
@@ -371,39 +468,68 @@ main() {
     echo -e "${GREEN}[INFO] Existing commits today: $EXISTING_COMMITS${NC}"
     echo -e "${GREEN}[INFO] Creating $COMMITS_COUNT additional commits...${NC}"
     
+    # Exit if target already achieved
     if [ $COMMITS_COUNT -eq 0 ]; then
         echo -e "${YELLOW}[SUCCESS] Target already achieved! No additional commits needed.${NC}"
         exit 0
     fi
     
-    for (( i=1; i<=COMMITS_COUNT; i++ ))
-    do
+    # Create commits loop
+    for (( i=1; i<=COMMITS_COUNT; i++ )); do
         EMOJI=$(get_random_emoji)
         QUOTE=$(get_inspirational_quote)
-        FILENAME=$(generate_filename "$QUOTE")
         COMMIT_MSG=$(generate_commit_message "$EMOJI" "$QUOTE")
         
-        echo "$QUOTE" > "quotes/$FILENAME"
-        git add "quotes/$FILENAME"
+        # Add quote to quotes repository README.md
+        append_quote_to_readme "$QUOTE" "$EMOJI"
+        
+        # Commit to quotes repository
+        cd "$QUOTES_REPO_DIR" || exit
+        git add README.md
+        git commit -m "$COMMIT_MSG"
+        
+        # Create dummy commit in auto-commit repository
+        cd "$REPO_DIR" || exit
+        echo "$(date): $COMMIT_MSG" >> auto-commit.log
+        git add auto-commit.log
         git commit -m "$COMMIT_MSG"
         
         echo -e "${YELLOW}Committed: ${NC}${COMMIT_MSG}"
-        echo -e "   File: quotes/${FILENAME}"
+        echo -e "   Quote added to .quotes repository"
     done
     
-    # Push to remote
+    # Push to remote repositories
+    echo -e "${GREEN}[INFO] Pushing commits to GitHub...${NC}"
+    
+    # Push auto-commit repository
     if ! git remote show origin >/dev/null 2>&1; then
-        echo -e "${YELLOW}[WARNING] No remote origin set.${NC}"
+        echo -e "${YELLOW}[WARNING] No remote origin set for auto-commit repository.${NC}"
         echo -e "Create a GitHub repository and run:"
         echo -e "git remote add origin git@github.com:wanforge/.auto-commit.git"
         echo -e "or:"
         echo -e "git remote add origin https://github.com/wanforge/.auto-commit.git"
     else
-        echo -e "${GREEN}[INFO] Pushing commits to GitHub...${NC}"
         if git push origin main; then
-            echo -e "${GREEN}[SUCCESS] Pushed commits to GitHub!${NC}"
+            echo -e "${GREEN}[SUCCESS] Pushed auto-commit repository to GitHub!${NC}"
+        else
+            echo -e "${RED}[ERROR] Failed to push auto-commit repository to GitHub.${NC}"
+        fi
+    fi
+    
+    # Push quotes repository
+    cd "$QUOTES_REPO_DIR" || exit
+    if ! git remote show origin >/dev/null 2>&1; then
+        echo -e "${YELLOW}[WARNING] No remote origin set for quotes repository.${NC}"
+        echo -e "Create a GitHub repository and run:"
+        echo -e "cd $QUOTES_REPO_DIR"
+        echo -e "git remote add origin git@github.com:wanforge/.quotes.git"
+        echo -e "or:"
+        echo -e "git remote add origin https://github.com/wanforge/.quotes.git"
+    else
+        if git push origin main; then
+            echo -e "${GREEN}[SUCCESS] Pushed quotes repository to GitHub!${NC}"
             
-            # Final status
+            # Final status report
             local final_count=$((EXISTING_COMMITS + COMMITS_COUNT))
             echo -e "${GREEN}[PATTERN STATUS] Total commits today: $final_count/$TARGET_COMMITS${NC}"
             
@@ -413,9 +539,10 @@ main() {
                 echo -e "${YELLOW}[INFO] ⏳ Pattern partially completed. Run again if needed.${NC}"
             fi
         else
-            echo -e "${RED}[ERROR] Failed to push commits to GitHub. Please check your remote configuration and network connection.${NC}"
+            echo -e "${RED}[ERROR] Failed to push quotes repository to GitHub.${NC}"
         fi
     fi
 }
 
+# Execute main function
 main

@@ -176,7 +176,7 @@ generate_commit_message() {
 # =====================
 get_commits_for_aesthetic_pattern() {
     local day_of_week=$(date +%u)  # 1=Monday, 7=Sunday
-    local week_of_month=$(( ($(date +%d) - 1) / 7 + 1 ))
+    local week_of_month=$(( (10#$(date +%d) - 1) / 7 + 1 ))
     
     # Only create commits on weekdays (Monday-Friday)
     if [ $day_of_week -gt 5 ]; then
@@ -355,7 +355,7 @@ main() {
     
     # Get pattern description
     local day_name=$(date +%A)
-    local week_of_month=$(( ($(date +%d) - 1) / 7 + 1 ))
+    local week_of_month=$(( (10#$(date +%d) - 1) / 7 + 1 ))
     local pattern_name=""
     
     case $week_of_month in

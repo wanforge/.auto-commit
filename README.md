@@ -12,7 +12,8 @@ Automated Git commit script that creates aesthetic contribution patterns on GitH
 - 📅 **Smart Weekday-Only Commits** - Only runs Monday-Friday for professional patterns
 - 🔍 **GitHub Integration Check** - Verifies existing commits to avoid over-committing
 - 💬 **Inspirational Quotes** - Uses API or built-in Indonesian quotes collection
-- 📁 **Organized File Structure** - Saves quotes in dedicated `quotes/` folder
+- 📁 **Dual Repository Structure** - Separates script files and quotes into dedicated repositories
+- 📁 **Organized File Structure** - Saves quotes in dedicated `quotes/` folder in separate repository
 - 🎯 **Pattern-Based Commits** - 4 different weekly patterns (Ascending, Wave, Mountain, Descending)
 - 📝 **Preserved Filenames** - Keeps original case and spaces in quote filenames
 - 🔄 **Automatic Dependency Installation** - Auto-installs git, curl, jq
@@ -32,6 +33,7 @@ Automated Git commit script that creates aesthetic contribution patterns on GitH
   - [⏰ Cron Job Setup](#-cron-job-setup)
   - [📂 File Structure](#-file-structure)
   - [💾 Commit Behavior](#-commit-behavior)
+    - [🏗️ Dual Repository Architecture](#️-dual-repository-architecture)
     - [🎨 Aesthetic Patterns (Monday-Friday)](#-aesthetic-patterns-monday-friday)
     - [📝 Commit Format](#-commit-format)
     - [🔍 Smart Detection](#-smart-detection)
@@ -50,8 +52,8 @@ Automated Git commit script that creates aesthetic contribution patterns on GitH
 1. Clone or download the script:
 
 ```bash
-git clone https://github.com/wanforge/.auto-commit.git
-cd .auto-commit
+git clone https://github.com/wanforge/.auto-commit.git ~/www/.auto-commit
+cd ~/www/.auto-commit
 ```
 
 1. Make the script executable:
@@ -60,15 +62,18 @@ cd .auto-commit
 chmod +x auto-commit.sh
 ```
 
+1. The script will automatically create the quotes repository at `~/www/.quotes` when first run.
+
 ## ⚙️ Configuration
 
 Edit these variables at the top of `auto-commit.sh`:
 
 ```bash
-REPO_DIR="$HOME/.auto-commit"  # Repository storage location
-GIT_USER="Sugeng Sulistiyawan" # Your display name
+REPO_DIR="$HOME/www/.auto-commit"    # Auto-commit repository location
+QUOTES_REPO_DIR="$HOME/www/.quotes"  # Quotes repository location
+GIT_USER="Sugeng Sulistiyawan"       # Your display name
 GIT_EMAIL="sugeng.sulistiyawan@gmail.com" # Your email
-MAX_FILENAME_LENGTH=64         # Maximum filename length
+MAX_FILENAME_LENGTH=64               # Maximum filename length
 ```
 
 ## 🚀 Usage
@@ -104,18 +109,36 @@ Alternative schedules:
 ## 📂 File Structure
 
 ```text
-/home/sugengsulistiyawan/.auto-commit/
+/home/wanforge/www/.auto-commit/
 ├── auto-commit.sh      # Main script
 ├── auto-commit.log     # Execution logs (created by cron)
 ├── LICENSE.md          # MIT License
 ├── README.md           # This documentation
-└── quotes/             # Directory for quote files
+└── quotes/             # Directory for quote files (legacy)
+
+/home/wanforge/www/.quotes/
+├── README.md           # Quotes documentation
+├── quotes/             # Directory for quote files
     ├── Perjalanan ribuan mil dimulai dengan satu langkah.txt
     ├── Belajar adalah harta karun yang akan mengikuti pemiliknya ke mana pun.txt
     └── ...             # Additional quote files
 ```
 
 ## 💾 Commit Behavior
+
+### 🏗️ Dual Repository Architecture
+
+This script uses a unique dual repository system:
+
+1. **Script Repository** (`~/www/.auto-commit/`): Contains the automation script, logs, and documentation
+2. **Quotes Repository** (`~/www/.quotes/`): Contains the actual quote files that create the contribution pattern
+
+**Benefits:**
+
+- Clean separation of automation code and content
+- Content repository shows pure contribution activity
+- Script repository maintains automation history
+- Both repositories can have independent GitHub remotes
 
 ### 🎨 Aesthetic Patterns (Monday-Friday)
 
@@ -193,14 +216,26 @@ Weekend message:
 
 ### How do I connect to GitHub?
 
-Run these commands in your repository folder:
+Set up remotes for both repositories:
+
+**Auto-commit script repository:**
 
 ```bash
+cd ~/www/.auto-commit
 # SSH
 git remote add origin git@github.com:wanforge/.auto-commit.git
-
 # HTTPS
 git remote add origin https://github.com/wanforge/.auto-commit.git
+```
+
+**Quotes repository:**
+
+```bash
+cd ~/www/.quotes
+# SSH
+git remote add origin git@github.com:wanforge/quotes.git
+# HTTPS
+git remote add origin https://github.com/wanforge/quotes.git
 ```
 
 ### How to customize quotes?
@@ -227,10 +262,11 @@ The script automatically detects weekends and displays a friendly message withou
    crontab -e
    ```
 
-1. Delete the repository:
+1. Delete the repositories:
 
    ```bash
-   rm -rf ~/.auto-commit
+   rm -rf ~/www/.auto-commit
+   rm -rf ~/www/.quotes
    ```
 
 ## 📜 License

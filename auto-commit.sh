@@ -491,7 +491,7 @@ main() {
         # Create dummy commit in auto-commit repository
         cd "$REPO_DIR" || exit
         echo "$(date): $COMMIT_MSG" >> auto-commit.log
-        git add auto-commit.log
+        # git add auto-commit.log
         git commit -m "$COMMIT_MSG"
         
         echo -e "${YELLOW}Committed: ${NC}${COMMIT_MSG}"

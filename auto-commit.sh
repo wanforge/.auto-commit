@@ -469,10 +469,10 @@ main() {
     echo -e "${GREEN}[INFO] Creating $COMMITS_COUNT additional commits...${NC}"
     
     # Exit if target already achieved
-    if [ "$COMMITS_COUNT" -eq 0 ]; then
-        echo -e "${YELLOW}[SUCCESS] Target already achieved! No additional commits needed.${NC}"
-        exit 0
-    fi
+    # if [ "$COMMITS_COUNT" -eq 0 ]; then
+    #     echo -e "${YELLOW}[SUCCESS] Target already achieved! No additional commits needed.${NC}"
+    #     exit 0
+    # fi
     
     # Create commits loop
     for (( i=1; i<=COMMITS_COUNT; i++ )); do

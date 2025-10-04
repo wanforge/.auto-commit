@@ -254,7 +254,7 @@ get_commits_for_aesthetic_pattern() {
     local week_of_month=$(( (10#$(date +%d) - 1) / 7 + 1 ))
     
     # Only create commits on weekdays (Monday-Friday)
-    if [ $day_of_week -gt 5 ]; then
+    if [ "$day_of_week" -gt 5 ]; then
         echo 0
         return
     fi
@@ -374,11 +374,11 @@ calculate_remaining_commits() {
 main() {
     # Check if it's weekend (Saturday=6, Sunday=7)
     local day_of_week=$(date +%u)
-    if [ $day_of_week -gt 5 ]; then
-        echo -e "${YELLOW}[INFO] It's weekend! No commits scheduled for aesthetic pattern.${NC}"
-        echo -e "${GREEN}[INFO] Come back on Monday-Friday for beautiful contribution patterns!${NC}"
-        exit 0
-    fi
+    # if [ $day_of_week -gt 5 ]; then
+    #     echo -e "${YELLOW}[INFO] It's weekend! No commits scheduled for aesthetic pattern.${NC}"
+    #     echo -e "${GREEN}[INFO] Come back on Monday-Friday for beautiful contribution patterns!${NC}"
+    #     exit 0
+    # fi
     
     # Check dependencies
     check_dependencies
@@ -469,7 +469,7 @@ main() {
     echo -e "${GREEN}[INFO] Creating $COMMITS_COUNT additional commits...${NC}"
     
     # Exit if target already achieved
-    if [ $COMMITS_COUNT -eq 0 ]; then
+    if [ "$COMMITS_COUNT" -eq 0 ]; then
         echo -e "${YELLOW}[SUCCESS] Target already achieved! No additional commits needed.${NC}"
         exit 0
     fi
@@ -533,7 +533,7 @@ main() {
             local final_count=$((EXISTING_COMMITS + COMMITS_COUNT))
             echo -e "${GREEN}[PATTERN STATUS] Total commits today: $final_count/$TARGET_COMMITS${NC}"
             
-            if [ $final_count -ge $TARGET_COMMITS ]; then
+            if [ $final_count -ge "$TARGET_COMMITS" ]; then
                 echo -e "${GREEN}[SUCCESS] ✅ Pattern goal achieved for today!${NC}"
             else
                 echo -e "${YELLOW}[INFO] ⏳ Pattern partially completed. Run again if needed.${NC}"

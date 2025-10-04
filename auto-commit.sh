@@ -12,7 +12,7 @@
 
 # Configuration
 REPO_DIR="$HOME/www/.auto-commit"    # Auto-commit repository location
-QUOTES_REPO_DIR="$HOME/www/.quotes"  # Quotes repository location
+QUOTES_REPO_DIR="$REPO_DIR/.quotes"  # Quotes repository location
 GIT_USER="Sugeng Sulistiyawan"
 GIT_EMAIL="sugeng.sulistiyawan@gmail.com"
 MAX_FILENAME_LENGTH=64

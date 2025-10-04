@@ -373,7 +373,7 @@ calculate_remaining_commits() {
 
 main() {
     # Check if it's weekend (Saturday=6, Sunday=7)
-    local day_of_week=$(date +%u)
+    # local day_of_week=$(date +%u)
     # if [ $day_of_week -gt 5 ]; then
     #     echo -e "${YELLOW}[INFO] It's weekend! No commits scheduled for aesthetic pattern.${NC}"
     #     echo -e "${GREEN}[INFO] Come back on Monday-Friday for beautiful contribution patterns!${NC}"

@@ -495,7 +495,7 @@ main() {
         git commit -m "$COMMIT_MSG"
         
         echo -e "${YELLOW}Committed: ${NC}${COMMIT_MSG}"
-        echo -e "   Quote added to .quotes repository"
+        echo -e "   Quote added to quotes repository"
     done
     
     # Push to remote repositories
@@ -522,9 +522,9 @@ main() {
         echo -e "${YELLOW}[WARNING] No remote origin set for quotes repository.${NC}"
         echo -e "Create a GitHub repository and run:"
         echo -e "cd $QUOTES_REPO_DIR"
-        echo -e "git remote add origin git@github.com:wanforge/.quotes.git"
-        echo -e "or:"
-        echo -e "git remote add origin https://github.com/wanforge/.quotes.git"
+        echo -e "git remote add origin git@github.com:wanforge/quotes.git"
+        echo -e "or:"cd
+        echo -e "git remote add origin https://github.com/wanforge/quotes.git"
     else
         if git push origin main; then
             echo -e "${GREEN}[SUCCESS] Pushed quotes repository to GitHub!${NC}"
